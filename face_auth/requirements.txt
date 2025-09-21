@@ -1,0 +1,28 @@
+# FastAPI and Web Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+
+# Configuration
+pydantic==2.4.2
+pydantic-settings==2.0.3
+python-dotenv==1.0.0
+
+# Face Recognition
+opencv-python>=4.8.1.78
+insightface==0.7.3
+onnxruntime>=1.16.0
+
+# Scientific Computing
+numpy>=1.24.0
+
+# Vector Database
+faiss-cpu>=1.7.4
+
+# Authentication
+python-jose==3.3.0
+passlib==1.7.4
+
+# Database (optional)
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0

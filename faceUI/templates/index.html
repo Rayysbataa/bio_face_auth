@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Authentication System - AI-Powered Biometric Security</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-user-shield"></i>
+                    <h1>Face Authentication System</h1>
+                </div>
+                <div class="api-status">
+                    <span class="status-indicator {% if api_status %}status-online{% else %}status-offline{% endif %}"></span>
+                    <span class="status-text">API {% if api_status %}Online{% else %}Offline{% endif %}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Mode Selection -->
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="enroll">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Enroll New User</span>
+                </button>
+                <button class="mode-btn" data-mode="verify">
+                    <i class="fas fa-user-check"></i>
+                    <span>Verify User</span>
+                </button>
+            </div>
+
+            <!-- Enrollment Section -->
+            <section id="enrollSection" class="auth-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-plus"></i> User Enrollment</h2>
+                    <p>Create a secure biometric profile by capturing multiple face images</p>
+                </div>
+
+                <div class="auth-grid">
+                    <!-- Left Panel - Camera -->
+                    <div class="camera-panel">
+                        <div class="camera-container">
+                            <video id="enrollVideo" autoplay muted></video>
+                            <canvas id="enrollCanvas"></canvas>
+                            <div class="face-overlay" id="enrollFaceOverlay">
+                                <div class="face-guide"></div>
+                                <div class="face-status">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Detecting face...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="instructions-card">
+                            <h3><i class="fas fa-info-circle"></i> Photo Guidelines</h3>
+                            <ul class="instructions-list">
+                                <li><i class="fas fa-check"></i> Position your face in the center</li>
+                                <li><i class="fas fa-check"></i> Ensure good lighting on your face</li>
+                                <li><i class="fas fa-check"></i> Look directly at the camera</li>
+                                <li><i class="fas fa-check"></i> Keep a neutral expression</li>
+                                <li><i class="fas fa-check"></i> Remove glasses if possible</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel - Controls -->
+                    <div class="control-panel">
+                        <!-- User Input -->
+                        <div class="input-card">
+                            <label for="enrollUserId" class="input-label">
+                                <i class="fas fa-id-badge"></i> User ID
+                            </label>
+                            <input
+                                type="text"
+                                id="enrollUserId"
+                                class="input-field"
+                                placeholder="Enter unique identifier (e.g., john_doe_123)"
+                                required
+                            >
+                            <small class="input-hint">This ID will be used for future verification</small>
+                        </div>
+
+                        <!-- Camera Controls -->
+                        <div class="camera-controls">
+                            <button id="startEnrollCamera" class="btn btn-primary btn-large">
+                                <i class="fas fa-video"></i> Start Camera
+                            </button>
+                            <button id="captureEnrollPhoto" class="btn btn-success btn-large" style="display:none;">
+                                <i class="fas fa-camera"></i> Capture Photo
+                            </button>
+                        </div>
+
+                        <!-- Captured Photos Gallery -->
+                        <div class="photos-gallery" id="enrollPhotosGallery">
+                            <h3><i class="fas fa-images"></i> Captured Photos (<span id="photoCount">0</span>/5)</h3>
+                            <div class="photos-grid" id="enrollPhotosGrid">
+                                <!-- Photos will be added here dynamically -->
+                            </div>
+                            <div class="gallery-hint">
+                                <i class="fas fa-lightbulb"></i>
+                                Capture 3-5 photos from slightly different angles for better accuracy
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button id="submitEnrollment" class="btn btn-primary btn-submit" disabled>
+                            <i class="fas fa-user-plus"></i> Complete Enrollment
+                        </button>
+
+                        <!-- Status Messages -->
+                        <div id="enrollStatus" class="status-message"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Verification Section -->
+            <section id="verifySection" class="auth-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-check"></i> User Verification</h2>
+                    <p>Verify your identity using face recognition</p>
+                </div>
+
+                <div class="auth-grid">
+                    <!-- Left Panel - Camera -->
+                    <div class="camera-panel">
+                        <div class="camera-container">
+                            <video id="verifyVideo" autoplay muted></video>
+                            <canvas id="verifyCanvas"></canvas>
+                            <div class="face-overlay" id="verifyFaceOverlay">
+                                <div class="face-guide"></div>
+                                <div class="face-status">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <span>Detecting face...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confidence Meter -->
+                        <div class="confidence-meter" id="confidenceMeter" style="display:none;">
+                            <h3>Match Confidence</h3>
+                            <div class="meter-container">
+                                <div class="meter-fill" id="meterFill"></div>
+                                <span class="meter-value" id="meterValue">0%</span>
+                            </div>
+                            <div class="meter-labels">
+                                <span>Low</span>
+                                <span>Medium</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel - Controls -->
+                    <div class="control-panel">
+                        <!-- User Input -->
+                        <div class="input-card">
+                            <label for="verifyUserId" class="input-label">
+                                <i class="fas fa-id-badge"></i> User ID
+                            </label>
+                            <input
+                                type="text"
+                                id="verifyUserId"
+                                class="input-field"
+                                placeholder="Enter your user ID"
+                                required
+                            >
+                        </div>
+
+                        <!-- Camera Controls -->
+                        <div class="camera-controls">
+                            <button id="startVerifyCamera" class="btn btn-primary btn-large">
+                                <i class="fas fa-video"></i> Start Camera
+                            </button>
+                            <button id="captureVerifyPhoto" class="btn btn-success btn-large" style="display:none;">
+                                <i class="fas fa-camera"></i> Take Photo
+                            </button>
+                        </div>
+
+                        <!-- Captured Photo Preview -->
+                        <div class="verify-photo-preview" id="verifyPhotoPreview" style="display:none;">
+                            <h3><i class="fas fa-image"></i> Captured Photo</h3>
+                            <div class="preview-container">
+                                <img id="verifyPreviewImg" src="" alt="Captured face">
+                                <button class="btn btn-sm btn-secondary" id="retakeVerifyPhoto">
+                                    <i class="fas fa-redo"></i> Retake
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button id="submitVerification" class="btn btn-primary btn-submit" disabled>
+                            <i class="fas fa-user-check"></i> Verify Identity
+                        </button>
+
+                        <!-- Result Display -->
+                        <div id="verifyResult" class="verify-result" style="display:none;">
+                            <!-- Result will be shown here -->
+                        </div>
+
+                        <!-- Status Messages -->
+                        <div id="verifyStatus" class="status-message"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p id="loadingText">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Face API Script (for client-side face detection) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="/static/js/face-auth.js"></script>
+</body>
+</html>

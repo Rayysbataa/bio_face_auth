@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Face Recognition API Service
+  face-api:
+    build:
+      context: ./face_auth
+      dockerfile: Dockerfile
+    container_name: bio-face-api
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8101
+      - VECTOR_DB_PATH=/app/data/embeddings
+      - LOG_LEVEL=INFO
+    ports:
+      - "8101:8101"
+    volumes:
+      - face_embeddings:/app/data/embeddings
+      - face_uploads:/app/data/uploads
+    networks:
+      - face-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Face Authentication UI
+  face-ui:
+    build:
+      context: ./faceUI
+      dockerfile: Dockerfile
+    container_name: bio-face-ui
+    environment:
+      - FACE_API_URL=http://face-api:8101
+      - PORT=5004
+    ports:
+      - "5004:5004"
+    depends_on:
+      - face-api
+    networks:
+      - face-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL Database (Optional - for user metadata)
+  postgres:
+    image: postgres:15-alpine
+    container_name: bio-face-db
+    environment:
+      - POSTGRES_USER=faceauth
+      - POSTGRES_PASSWORD=faceauth123
+      - POSTGRES_DB=face_authentication
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - face-network
+    restart: unless-stopped
+
+  # Redis Cache (Optional - for session management)
+  redis:
+    image: redis:7-alpine
+    container_name: bio-face-cache
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - face-network
+    restart: unless-stopped
+
+networks:
+  face-network:
+    driver: bridge
+    name: bio-face-network
+
+volumes:
+  face_embeddings:
+    name: bio-face-embeddings
+  face_uploads:
+    name: bio-face-uploads
+  postgres_data:
+    name: bio-face-postgres
+  redis_data:
+    name: bio-face-redis

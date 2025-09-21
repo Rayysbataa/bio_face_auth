@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Authentication Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            position: relative;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        .face-outline {
+            border: 2px dashed #4CAF50;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-info {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Face Authentication Demo</h1>
+        
+        <!-- Enrollment Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Enrollment</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">User ID:</label>
+                <input type="text" id="enrollUserId" class="w-full p-2 border rounded" placeholder="Enter user ID">
+            </div>
+            
+            <div class="camera-container mb-4">
+                <video id="enrollVideo" class="w-full rounded" autoplay playsinline></video>
+                <canvas id="enrollCanvas" class="hidden"></canvas>
+                <div class="face-outline" style="width: 200px; height: 200px;"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div id="enrollProgress" class="progress-bar" style="width: 0%"></div>
+            </div>
+            
+            <div id="enrollStatus" class="status-message status-info">Position your face within the circle</div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="startEnrollCamera" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Start Camera
+                </button>
+                <button id="captureEnrollImage" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">
+                    Capture Image
+                </button>
+                <button id="stopEnrollCamera" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 hidden">
+                    Stop Camera
+                </button>
+            </div>
+            
+            <div id="enrollPreview" class="mt-4 grid grid-cols-3 gap-4 hidden">
+                <!-- Preview images will be added here -->
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button id="submitEnrollment" class="bg-purple-500 text-white px-6 py-2 rounded hover:bg-purple-600 hidden">
+                    Complete Enrollment
+                </button>
+            </div>
+        </div>
+        
+        <!-- Verification Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Verification</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">User ID:</label>
+                <input type="text" id="verifyUserId" class="w-full p-2 border rounded" placeholder="Enter user ID">
+            </div>
+            
+            <div class="camera-container mb-4">
+                <video id="verifyVideo" class="w-full rounded" autoplay playsinline></video>
+                <canvas id="verifyCanvas" class="hidden"></canvas>
+                <div class="face-outline" style="width: 200px; height: 200px;"></div>
+            </div>
+            
+            <div id="verifyStatus" class="status-message status-info">Position your face within the circle</div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="startVerifyCamera" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Start Camera
+                </button>
+                <button id="captureVerifyImage" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">
+                    Capture Image
+                </button>
+                <button id="stopVerifyCamera" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 hidden">
+                    Stop Camera
+                </button>
+            </div>
+            
+            <div id="verifyPreview" class="mt-4 hidden">
+                <img id="verifyImage" class="w-full rounded" alt="Verification preview">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Camera and UI state
+        let enrollStream = null;
+        let verifyStream = null;
+        let enrollImages = [];
+        let enrollProgress = 0;
+        
+        // DOM Elements
+        const enrollVideo = document.getElementById('enrollVideo');
+        const verifyVideo = document.getElementById('verifyVideo');
+        const enrollCanvas = document.getElementById('enrollCanvas');
+        const verifyCanvas = document.getElementById('verifyCanvas');
+        const enrollProgressBar = document.getElementById('enrollProgress');
+        const enrollStatus = document.getElementById('enrollStatus');
+        const verifyStatus = document.getElementById('verifyStatus');
+        
+        // Enrollment Functions
+        async function startEnrollCamera() {
+            try {
+                enrollStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: "user"
+                    }
+                });
+                enrollVideo.srcObject = enrollStream;
+                document.getElementById('startEnrollCamera').classList.add('hidden');
+                document.getElementById('captureEnrollImage').classList.remove('hidden');
+                document.getElementById('stopEnrollCamera').classList.remove('hidden');
+                enrollStatus.textContent = "Camera started. Position your face within the circle.";
+            } catch (error) {
+                enrollStatus.textContent = "Error accessing camera: " + error.message;
+                enrollStatus.classList.add('status-error');
+            }
+        }
+        
+        function stopEnrollCamera() {
+            if (enrollStream) {
+                enrollStream.getTracks().forEach(track => track.stop());
+                enrollStream = null;
+            }
+            document.getElementById('startEnrollCamera').classList.remove('hidden');
+            document.getElementById('captureEnrollImage').classList.add('hidden');
+            document.getElementById('stopEnrollCamera').classList.add('hidden');
+            enrollStatus.textContent = "Camera stopped";
+        }
+        
+        async function captureEnrollImage() {
+            if (enrollImages.length >= 5) {
+                enrollStatus.textContent = "Maximum 5 images allowed";
+                return;
+            }
+            
+            const canvas = enrollCanvas;
+            canvas.width = enrollVideo.videoWidth;
+            canvas.height = enrollVideo.videoHeight;
+            canvas.getContext('2d').drawImage(enrollVideo, 0, 0);
+            
+            // Convert to blob
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+            enrollImages.push(blob);
+            
+            // Update progress
+            enrollProgress = (enrollImages.length / 5) * 100;
+            enrollProgressBar.style.width = `${enrollProgress}%`;
+            
+            // Update preview
+            const preview = document.getElementById('enrollPreview');
+            preview.classList.remove('hidden');
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(blob);
+            img.className = 'w-full rounded';
+            preview.appendChild(img);
+            
+            // Update status
+            enrollStatus.textContent = `Captured ${enrollImages.length} of 5 images`;
+            
+            // Show submit button if we have enough images
+            if (enrollImages.length >= 3) {
+                document.getElementById('submitEnrollment').classList.remove('hidden');
+            }
+        }
+        
+        async function submitEnrollment() {
+            const userId = document.getElementById('enrollUserId').value;
+            if (!userId) {
+                enrollStatus.textContent = "Please enter a user ID";
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            enrollImages.forEach((blob, index) => {
+                formData.append('images', blob, `image_${index}.jpg`);
+            });
+            
+            try {
+                enrollStatus.textContent = "Submitting enrollment...";
+                const response = await fetch('/api/v1/enroll', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    enrollStatus.textContent = "Enrollment successful!";
+                    enrollStatus.classList.add('status-success');
+                    // Reset UI
+                    enrollImages = [];
+                    enrollProgress = 0;
+                    enrollProgressBar.style.width = '0%';
+                    document.getElementById('enrollPreview').innerHTML = '';
+                    document.getElementById('submitEnrollment').classList.add('hidden');
+                } else {
+                    enrollStatus.textContent = "Enrollment failed: " + result.message;
+                    enrollStatus.classList.add('status-error');
+                }
+            } catch (error) {
+                enrollStatus.textContent = "Error: " + error.message;
+                enrollStatus.classList.add('status-error');
+            }
+        }
+        
+        // Verification Functions
+        async function startVerifyCamera() {
+            try {
+                verifyStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: "user"
+                    }
+                });
+                verifyVideo.srcObject = verifyStream;
+                document.getElementById('startVerifyCamera').classList.add('hidden');
+                document.getElementById('captureVerifyImage').classList.remove('hidden');
+                document.getElementById('stopVerifyCamera').classList.remove('hidden');
+                verifyStatus.textContent = "Camera started. Position your face within the circle.";
+            } catch (error) {
+                verifyStatus.textContent = "Error accessing camera: " + error.message;
+                verifyStatus.classList.add('status-error');
+            }
+        }
+        
+        function stopVerifyCamera() {
+            if (verifyStream) {
+                verifyStream.getTracks().forEach(track => track.stop());
+                verifyStream = null;
+            }
+            document.getElementById('startVerifyCamera').classList.remove('hidden');
+            document.getElementById('captureVerifyImage').classList.add('hidden');
+            document.getElementById('stopVerifyCamera').classList.add('hidden');
+            verifyStatus.textContent = "Camera stopped";
+        }
+        
+        async function captureVerifyImage() {
+            const canvas = verifyCanvas;
+            canvas.width = verifyVideo.videoWidth;
+            canvas.height = verifyVideo.videoHeight;
+            canvas.getContext('2d').drawImage(verifyVideo, 0, 0);
+            
+            // Show preview
+            const preview = document.getElementById('verifyPreview');
+            preview.classList.remove('hidden');
+            const img = document.getElementById('verifyImage');
+            img.src = canvas.toDataURL('image/jpeg', 0.95);
+            
+            // Convert to blob and submit
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+            const userId = document.getElementById('verifyUserId').value;
+            
+            if (!userId) {
+                verifyStatus.textContent = "Please enter a user ID";
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('image', blob, 'verify.jpg');
+            
+            try {
+                verifyStatus.textContent = "Verifying...";
+                const response = await fetch('/api/v1/verify', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    verifyStatus.textContent = `Verification successful! Confidence: ${(result.confidence * 100).toFixed(1)}%`;
+                    verifyStatus.classList.add('status-success');
+                } else {
+                    verifyStatus.textContent = "Verification failed: " + result.message;
+                    verifyStatus.classList.add('status-error');
+                }
+            } catch (error) {
+                verifyStatus.textContent = "Error: " + error.message;
+                verifyStatus.classList.add('status-error');
+            }
+        }
+        
+        // Event Listeners
+        document.getElementById('startEnrollCamera').addEventListener('click', startEnrollCamera);
+        document.getElementById('stopEnrollCamera').addEventListener('click', stopEnrollCamera);
+        document.getElementById('captureEnrollImage').addEventListener('click', captureEnrollImage);
+        document.getElementById('submitEnrollment').addEventListener('click', submitEnrollment);
+        
+        document.getElementById('startVerifyCamera').addEventListener('click', startVerifyCamera);
+        document.getElementById('stopVerifyCamera').addEventListener('click', stopVerifyCamera);
+        document.getElementById('captureVerifyImage').addEventListener('click', captureVerifyImage);
+    </script>
+</body>
+</html> 
